@@ -70,6 +70,7 @@ localparam CONF_STR = {
 	"OGH,FDC,Original,Fast,Disabled;",
 	"O5,Distributor,Amstrad,Schneider;",
 	"O4,Model,CPC 6128,CPC 664;",
+	"O3,Tape sound,ON,OFF;",
 	"T0,Reset & apply model;"
 };
 
@@ -286,6 +287,10 @@ reg reset;
 always @(posedge clk_sys) begin
 	if(reset) model <= status[4];
 	reset <= status[0] | buttons[1] | rom_download;
+	if(status[3]) begin
+		tape_play2 <= 1'b0;
+	end
+	else tape_play2 <= tape_play;
 end
 
 //////////////////////////////////////////////////////////////////////////
@@ -631,7 +636,7 @@ sigma_delta_dac #(7) dac_l
 (
 	.CLK(clk_sys & ce_16),
 	.RESET(reset),
-	.DACin(audio_l - audio_l[7:2] + {tape_rec, 5'd0}),
+	.DACin(audio_l - audio_l[7:2] + {tape_rec, 5'd0} + {tape_play2, 5'd0}),
 	.DACout(AUDIO_L)
 );
 
@@ -639,7 +644,7 @@ sigma_delta_dac #(7) dac_r
 (
 	.CLK(clk_sys & ce_16),
 	.RESET(reset),
-	.DACin(audio_r - audio_r[7:2] + {tape_rec, 5'd0}),
+	.DACin(audio_r - audio_r[7:2] + {tape_rec, 5'd0} + {tape_play2, 5'd0}),
 	.DACout(AUDIO_R)
 );
 
@@ -648,5 +653,6 @@ sigma_delta_dac #(7) dac_r
 assign UART_TX = tape_motor;
 wire tape_motor;
 wire tape_play = UART_RX;
+wire tape_play2;
 
 endmodule
